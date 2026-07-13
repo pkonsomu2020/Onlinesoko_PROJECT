@@ -1,0 +1,55 @@
+# ============================================================
+# OnlineSoko — .gitignore
+# ============================================================
+
+# ------ Dependencies ----------------------------------------
+node_modules
+
+# ------ Build outputs ---------------------------------------
+dist
+dist-ssr
+.output
+.output/
+.vinxi
+.nitro
+
+# ------ TanStack / Lovable internals ------------------------
+.tanstack/**
+
+# ------ Environment & secrets — NEVER commit these ----------
+.env
+.env.*
+!.env.example
+.env.example
+.env.production
+
+# ------ Wrangler / Cloudflare (not used, kept as guard) -----
+.wrangler/
+.dev.vars
+
+# ------ Logs ------------------------------------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------ OS / editor files -----------------------------------
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ------ Misc ------------------------------------------------
+*.local
+
+query-results-export-2026-07-13_22-15-37.csv
+DEPLOYMENT.md

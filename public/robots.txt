@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /auth
+
+Sitemap: https://unconquered.co.ke/sitemap.xml

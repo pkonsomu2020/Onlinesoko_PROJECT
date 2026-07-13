@@ -1,0 +1,151 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Warm off-white "paper" */
+  --paper: oklch(0.965 0.008 95);
+  --background: oklch(0.965 0.008 95);
+  --foreground: oklch(0.16 0.01 250);
+  --ink: oklch(0.14 0.01 250);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 250);
+
+  /* Kenyan green */
+  --primary: oklch(0.58 0.18 149);
+  --primary-foreground: oklch(0.98 0.01 95);
+
+  --secondary: oklch(0.92 0.01 95);
+  --secondary-foreground: oklch(0.16 0.01 250);
+
+  --muted: oklch(0.94 0.008 95);
+  --muted-foreground: oklch(0.44 0.02 250);
+
+  --accent: oklch(0.16 0.01 250);
+  --accent-foreground: oklch(0.98 0.01 95);
+
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 95);
+
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.2 0.02 60);
+
+  --success: oklch(0.58 0.18 149);
+  --success-foreground: oklch(0.98 0.01 95);
+
+  --border: oklch(0.87 0.01 95);
+  --input: oklch(0.87 0.01 95);
+  --ring: oklch(0.58 0.18 149);
+}
+
+.dark {
+  --paper: oklch(0.16 0.01 250);
+  --background: oklch(0.16 0.01 250);
+  --foreground: oklch(0.96 0.008 95);
+  --ink: oklch(0.98 0.008 95);
+  --card: oklch(0.22 0.012 250);
+  --card-foreground: oklch(0.96 0.008 95);
+  --popover: oklch(0.22 0.012 250);
+  --popover-foreground: oklch(0.96 0.008 95);
+  --primary: oklch(0.66 0.19 149);
+  --primary-foreground: oklch(0.14 0.01 250);
+  --secondary: oklch(0.26 0.012 250);
+  --secondary-foreground: oklch(0.96 0.008 95);
+  --muted: oklch(0.26 0.012 250);
+  --muted-foreground: oklch(0.7 0.02 250);
+  --accent: oklch(0.96 0.008 95);
+  --accent-foreground: oklch(0.14 0.01 250);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.98 0.01 95);
+  --border: oklch(0.3 0.01 250);
+  --input: oklch(0.3 0.01 250);
+  --ring: oklch(0.66 0.19 149);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-family: var(--font-sans); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+}
+
+/* Ticket-stub notch: two half-circles cut from the sides */
+@utility ticket-stub {
+  position: relative;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  &::before, &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 9999px;
+    transform: translateY(-50%);
+  }
+  &::before { left: -10px; }
+  &::after { right: -10px; }
+}
+
+@utility perforated {
+  background-image: radial-gradient(circle at 3px 50%, var(--color-border) 1.5px, transparent 1.5px);
+  background-size: 8px 100%;
+  background-repeat: repeat-x;
+  height: 1px;
+}
+
+@utility mono-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
