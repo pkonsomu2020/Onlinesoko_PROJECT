@@ -13,7 +13,8 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    // Target Node.js for cPanel / Phusion Passenger hosting on unconquered.co.ke
-    preset: "node-server",
+    // Vercel preset — Nitro outputs to .vercel/output/ in the format Vercel expects.
+    // Server functions run as Vercel Serverless Functions (Node.js runtime).
+    preset: "vercel",
   },
 });

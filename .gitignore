@@ -10,6 +10,7 @@ dist
 dist-ssr
 .output
 .output/
+.vercel/output
 .vinxi
 .nitro
 
