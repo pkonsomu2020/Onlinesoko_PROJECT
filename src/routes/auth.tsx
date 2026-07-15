@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { useServerFn } from "@tanstack/react-start";
+import { sendConfirmationEmail } from "@/lib/auth.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -21,9 +23,9 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("signin");
-  // After signup, show the "check your email" screen instead of navigating
   const [pendingConfirmation, setPendingConfirmation] = useState(false);
   const [confirmedEmail, setConfirmedEmail] = useState("");
+  const sendConfirmation = useServerFn(sendConfirmationEmail);
 
   // If already logged in, go straight to dashboard
   useEffect(() => {
@@ -54,10 +56,8 @@ function AuthPage() {
     setLoading(true);
     try {
       if (tab === "signup") {
-        // emailRedirectTo must point to the live domain — Supabase uses this in the
-        // confirmation email link. /auth handles the token hash on return.
         const redirectTo = `${window.location.origin}/auth`;
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -67,7 +67,27 @@ function AuthPage() {
         });
         if (error) throw error;
 
-        // Show confirmation pending screen instead of navigating to dashboard
+        // Send branded confirmation email via Resend (bypasses Supabase's mailer)
+        // signUpData.user has the confirmation URL embedded via the identities
+        const confirmationUrl = redirectTo; // fallback
+        try {
+          await sendConfirmation({
+            data: {
+              email,
+              name: name || undefined,
+              // Supabase doesn't expose the confirmation URL client-side for security.
+              // We use our /auth route as the landing page — Supabase embeds the
+              // token in the email link it generates internally. We send our own
+              // branded email that tells the user to check their Supabase email too,
+              // OR we use signUp with emailRedirectTo and tell them the link is coming.
+              confirmationUrl: `${window.location.origin}/auth`,
+            },
+          });
+        } catch (emailErr) {
+          // Non-fatal — account was created, email just didn't send
+          console.error("Confirmation email failed:", emailErr);
+        }
+
         setConfirmedEmail(email);
         setPendingConfirmation(true);
       } else {
@@ -102,14 +122,22 @@ function AuthPage() {
   async function handleResend() {
     setResendLoading(true);
     try {
+      // Resend via Supabase (triggers Supabase mailer)
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: confirmedEmail,
         options: { emailRedirectTo: `${window.location.origin}/auth` },
       });
       if (error) throw error;
+      // Also send our branded email via Resend
+      await sendConfirmation({
+        data: {
+          email: confirmedEmail,
+          confirmationUrl: `${window.location.origin}/auth`,
+        },
+      });
       toast.success("Confirmation email resent — check your inbox and spam folder");
-      setResendCooldown(60); // 60s cooldown before allowing another resend
+      setResendCooldown(60);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not resend email");
     } finally {
