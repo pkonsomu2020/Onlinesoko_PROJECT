@@ -89,6 +89,34 @@ function AuthPage() {
     else if (!res.redirected) navigate({ to: "/dashboard/buyer" });
   }
 
+  // ── Resend cooldown timer ────────────────────────────────────────────────
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  async function handleResend() {
+    setResendLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: confirmedEmail,
+        options: { emailRedirectTo: `${window.location.origin}/auth` },
+      });
+      if (error) throw error;
+      toast.success("Confirmation email resent — check your inbox and spam folder");
+      setResendCooldown(60); // 60s cooldown before allowing another resend
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not resend email");
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
   // ── Confirmation pending screen ──────────────────────────────────────────
   if (pendingConfirmation) {
     return (
@@ -98,16 +126,24 @@ function AuthPage() {
             <MailCheck className="h-8 w-8 text-primary" />
           </div>
           <h1 className="mt-6 font-display text-2xl font-bold">Check your email</h1>
-          <p className="mt-3 text-muted-foreground">
-            We sent a confirmation link to
-          </p>
-          <p className="mt-1 font-semibold">{confirmedEmail}</p>
+          <p className="mt-3 text-muted-foreground">We sent a confirmation link to</p>
+          <p className="mt-1 font-semibold break-all">{confirmedEmail}</p>
           <p className="mt-3 text-sm text-muted-foreground">
-            Click the link in the email to activate your account, then come back here to sign in.
-            The link expires in 24 hours.
+            Click the link in the email to activate your account, then come
+            back here to sign in. The link expires in 24 hours.
           </p>
 
-          <div className="mt-8 space-y-3">
+          {/* Tip box */}
+          <div className="mt-5 rounded-lg border border-border bg-muted/40 p-4 text-left text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Not seeing it?</p>
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Check your <span className="font-medium">spam / junk</span> folder</li>
+              <li>Allow up to <span className="font-medium">2 minutes</span> for delivery</li>
+              <li>Make sure <span className="font-medium">{confirmedEmail}</span> is correct</li>
+            </ul>
+          </div>
+
+          <div className="mt-6 space-y-3">
             <Button
               className="w-full"
               onClick={() => {
@@ -119,25 +155,30 @@ function AuthPage() {
               Go to sign in
             </Button>
             <Button
+              variant="outline"
+              className="w-full"
+              disabled={resendCooldown > 0 || resendLoading}
+              onClick={handleResend}
+            >
+              {resendLoading && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              {resendCooldown > 0
+                ? `Resend available in ${resendCooldown}s`
+                : "Resend confirmation email"}
+            </Button>
+            <Button
               variant="ghost"
-              className="w-full text-sm"
-              onClick={async () => {
-                const { error } = await supabase.auth.resend({
-                  type: "signup",
-                  email: confirmedEmail,
-                  options: { emailRedirectTo: `${window.location.origin}/auth` },
-                });
-                if (error) toast.error(error.message);
-                else toast.success("Confirmation email resent");
+              className="w-full text-sm text-muted-foreground"
+              onClick={() => {
+                setPendingConfirmation(false);
+                setTab("signup");
+                setEmail("");
+                setPassword("");
+                setName("");
               }}
             >
-              Resend confirmation email
+              Use a different email address
             </Button>
           </div>
-
-          <p className="mt-6 text-xs text-muted-foreground">
-            Didn't receive it? Check your spam folder.
-          </p>
         </div>
       </div>
     );
