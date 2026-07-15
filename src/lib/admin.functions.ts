@@ -108,6 +108,29 @@ export const triggerDraw = createServerFn({ method: "POST" })
         body: `Your ticket #${winning} won "${raffle.title}". Admin will contact you for handover.`,
         payload: { raffle_id: raffle.id, ticket_number: winning },
       });
+
+      // Send winner email via Resend
+      try {
+        const { data: winnerProfile } = await supabaseAdmin
+          .from("profiles").select("full_name").eq("id", winner.buyer_id).maybeSingle();
+        const { data: winnerUser } = await supabaseAdmin.auth.admin
+          .getUserById(winner.buyer_id);
+        if (winnerUser.user?.email) {
+          const { sendEmail, winnerEmail } = await import("@/lib/email");
+          await sendEmail({
+            to: winnerUser.user.email,
+            ...winnerEmail({
+              winnerName: winnerProfile?.full_name ?? winnerUser.user.email,
+              raffleTitle: raffle.title,
+              ticketNumber: winning,
+              adminEmail: "admin@unconquered.co.ke",
+            }),
+          });
+        }
+      } catch (emailErr) {
+        // Non-fatal — log but don't fail the draw
+        console.error("[OnlineSoko] Winner email failed:", emailErr);
+      }
     }
     return { winning_ticket_number: winning };
   });
@@ -133,6 +156,28 @@ export const confirmHandover = createServerFn({ method: "POST" })
       title: `Payout released: KSh ${net.toLocaleString()}`,
       body: `Handover confirmed for "${raffle.title}". Platform fee ${(PLATFORM_FEE * 100).toFixed(0)}%.`,
     });
+
+    // Send payout email via Resend
+    try {
+      const { data: sellerProfile } = await supabaseAdmin
+        .from("profiles").select("full_name").eq("id", raffle.seller_id).maybeSingle();
+      const { data: sellerUser } = await supabaseAdmin.auth.admin
+        .getUserById(raffle.seller_id);
+      if (sellerUser.user?.email) {
+        const { sendEmail, payoutReleasedEmail } = await import("@/lib/email");
+        await sendEmail({
+          to: sellerUser.user.email,
+          ...payoutReleasedEmail({
+            sellerName: sellerProfile?.full_name ?? sellerUser.user.email,
+            raffleTitle: raffle.title,
+            netPayout: net,
+          }),
+        });
+      }
+    } catch (emailErr) {
+      console.error("[OnlineSoko] Payout email failed:", emailErr);
+    }
+
     return { gross, fee, net };
   });
 
