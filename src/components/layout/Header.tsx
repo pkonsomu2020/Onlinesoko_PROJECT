@@ -2,10 +2,16 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Ticket, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+
+function SokoLogo({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <img src="/logo.svg" alt="OnlineSoko logo" className={className} />
+  );
+}
 
 export function Header() {
   const [email, setEmail] = useState<string | null>(null);
@@ -28,9 +34,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Ticket className="h-4 w-4" />
-          </span>
+          <SokoLogo className="h-8 w-8 rounded-md" />
           <span className="font-display text-lg font-semibold tracking-tight">OnlineSoko</span>
         </Link>
 

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Ticket, Loader2, MailCheck } from "lucide-react";
-
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — OnlineSoko" }, { name: "robots", content: "noindex" }] }),
   component: AuthPage,
@@ -217,9 +216,7 @@ function AuthPage() {
     <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-md place-items-center px-4 py-12">
       <div className="w-full">
         <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Ticket className="h-4 w-4" />
-          </span>
+          <img src="/logo.svg" alt="OnlineSoko" className="h-9 w-9 rounded-md" />
           <span className="font-display text-xl font-semibold">OnlineSoko</span>
         </div>
         <h1 className="mt-6 font-display text-3xl font-bold">Welcome</h1>
