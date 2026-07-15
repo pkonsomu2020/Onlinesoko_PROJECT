@@ -26,10 +26,11 @@ export const submitRaffle = createServerFn({ method: "POST" })
     const seed = randomBytes(32).toString("hex");
     const commit_hash = createHash("sha256").update(seed).digest("hex");
 
-    // Ensure seller role
-    await context.supabase.from("user_roles").insert({
+    // Use supabaseAdmin to assign seller role — avoids RLS blocking self-insert
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("user_roles").insert({
       user_id: context.userId, role: "seller",
-    });
+    }).throwOnError();
 
     const { data: raffle, error } = await context.supabase
       .from("raffles")
@@ -56,12 +57,12 @@ export const submitRaffle = createServerFn({ method: "POST" })
     if (error || !raffle) throw new Error(error?.message ?? "Failed to create raffle");
 
     if (data.images?.length) {
-      await context.supabase.from("raffle_images").insert(
+      await supabaseAdmin.from("raffle_images").insert(
         data.images.map((url, i) => ({ raffle_id: raffle.id, url, position: i })),
       );
     }
 
-    await context.supabase.from("verifications").insert({
+    await supabaseAdmin.from("verifications").insert({
       raffle_id: raffle.id, status: "pending",
     });
 

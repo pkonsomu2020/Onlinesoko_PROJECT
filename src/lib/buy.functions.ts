@@ -6,6 +6,7 @@ const schema = z.object({
   raffle_id: z.string().uuid(),
   quantity: z.number().int().min(1).max(100),
   method: z.enum(["mpesa", "card"]),
+  phone: z.string().max(20).optional(), // M-Pesa number — stored in payment reference
 });
 
 export const buyTickets = createServerFn({ method: "POST" })
@@ -25,7 +26,11 @@ export const buyTickets = createServerFn({ method: "POST" })
 
     const amount = Number(raffle.ticket_price) * data.quantity;
 
-    // Create held payment (mocked)
+    // Create held payment (mocked — real M-Pesa/card integration needed for production)
+    const ref = data.method === "mpesa"
+      ? `MOCK-MPESA-${data.phone ?? "unknown"}-${Date.now()}`
+      : `MOCK-CARD-${Date.now()}`;
+
     const { data: payment, error: pErr } = await supabaseAdmin
       .from("payments")
       .insert({
@@ -34,7 +39,7 @@ export const buyTickets = createServerFn({ method: "POST" })
         amount,
         type: "ticket_purchase",
         status: "held",
-        reference: `MOCK-${data.method.toUpperCase()}-${Date.now()}`,
+        reference: ref,
       })
       .select("id")
       .single();

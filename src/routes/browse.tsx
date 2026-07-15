@@ -35,9 +35,10 @@ function Browse() {
     if (q) arr = arr.filter((r) => r.title.toLowerCase().includes(q.toLowerCase()));
     if (cat !== "all") arr = arr.filter((r) => r.category === cat);
     switch (sort) {
-      case "ending": arr = arr.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()); break;
-      case "price_asc": arr = arr.sort((a, b) => Number(a.ticket_price) - Number(b.ticket_price)); break;
-      case "price_desc": arr = arr.sort((a, b) => Number(b.ticket_price) - Number(a.ticket_price)); break;
+      case "ending":    arr = [...arr].sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()); break;
+      case "price_asc": arr = [...arr].sort((a, b) => Number(a.ticket_price) - Number(b.ticket_price)); break;
+      case "price_desc":arr = [...arr].sort((a, b) => Number(b.ticket_price) - Number(a.ticket_price)); break;
+      case "newest":    arr = [...arr].sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime()); break;
     }
     return arr;
   }, [raffles, q, cat, sort]);
@@ -60,6 +61,7 @@ function Browse() {
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ending">Ending soon</SelectItem>
+            <SelectItem value="newest">Newest first</SelectItem>
             <SelectItem value="price_asc">Ticket: low to high</SelectItem>
             <SelectItem value="price_desc">Ticket: high to low</SelectItem>
           </SelectContent>

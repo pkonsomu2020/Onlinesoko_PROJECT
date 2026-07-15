@@ -19,7 +19,7 @@ export const adminOverview = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: pending }, { data: live }, { data: disputes }, { data: draws }] = await Promise.all([
       supabaseAdmin.from("raffles").select("*, verifications(*)").eq("status", "pending_verification").order("created_at", { ascending: false }),
-      supabaseAdmin.from("raffles").select("*").in("status", ["live", "drawing"]).order("deadline"),
+      supabaseAdmin.from("raffles").select("*").in("status", ["live", "drawing", "completed"]).order("deadline"),
       supabaseAdmin.from("disputes").select("*, raffles(title)").eq("status", "open").order("created_at", { ascending: false }),
       supabaseAdmin.from("draws").select("*, raffles(title)").order("drawn_at", { ascending: false }).limit(10),
     ]);
@@ -187,9 +187,38 @@ export const refundRaffle = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("payments").update({ status: "refunded" }).eq("raffle_id", data.raffle_id).eq("type", "ticket_purchase");
-    await supabaseAdmin.from("raffles").update({ status: "refunded" }).eq("id", data.raffle_id);
-    return { ok: true };
+
+    // Get raffle title + all buyers before refunding
+    const { data: raffle } = await supabaseAdmin
+      .from("raffles").select("title").eq("id", data.raffle_id).single();
+
+    const { data: tickets } = await supabaseAdmin
+      .from("tickets").select("buyer_id").eq("raffle_id", data.raffle_id);
+
+    await supabaseAdmin.from("payments")
+      .update({ status: "refunded" })
+      .eq("raffle_id", data.raffle_id)
+      .eq("type", "ticket_purchase");
+
+    await supabaseAdmin.from("raffles")
+      .update({ status: "refunded" })
+      .eq("id", data.raffle_id);
+
+    // Notify every unique buyer
+    const uniqueBuyers = [...new Set((tickets ?? []).map((t) => t.buyer_id))];
+    if (uniqueBuyers.length > 0) {
+      await supabaseAdmin.from("notifications").insert(
+        uniqueBuyers.map((buyer_id) => ({
+          user_id: buyer_id,
+          kind: "raffle_refunded",
+          title: `Raffle refunded: "${raffle?.title ?? "Unknown"}"`,
+          body: "Your tickets have been refunded. Funds will be returned to your original payment method.",
+          payload: { raffle_id: data.raffle_id },
+        })),
+      );
+    }
+
+    return { ok: true, buyers_notified: uniqueBuyers.length };
   });
 
 export const resolveDispute = createServerFn({ method: "POST" })

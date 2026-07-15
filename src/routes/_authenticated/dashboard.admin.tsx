@@ -111,23 +111,69 @@ function LiveCard({ raffle }: { raffle: any }) {
   const handover = useServerFn(confirmHandover);
   const refund = useServerFn(refundRaffle);
   const [busy, setBusy] = useState(false);
+
   async function run(fn: () => Promise<any>, msg: string) {
     setBusy(true);
     try { await fn(); toast.success(msg); window.location.reload(); }
     catch (e) { toast.error(String(e)); }
     finally { setBusy(false); }
   }
+
+  const isCompleted = raffle.status === "completed";
+  const isDrawing   = raffle.status === "drawing";
+  const isLive      = raffle.status === "live";
+
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-      {raffle.hero_image && <img src={raffle.hero_image} className="h-12 w-12 rounded object-cover" alt="" />}
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold">{raffle.title}</div>
-        <div className="text-xs text-muted-foreground mono-num">{raffle.tickets_sold}/{raffle.total_tickets} · {timeLeft(raffle.deadline)}</div>
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-start gap-3">
+        {raffle.hero_image && (
+          <img src={raffle.hero_image} className="h-14 w-14 rounded-md object-cover shrink-0" alt="" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold">{raffle.title}</span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider
+              ${isCompleted ? "bg-primary/20 text-primary" :
+                isDrawing   ? "bg-accent text-accent-foreground" :
+                              "bg-muted text-muted-foreground"}`}>
+              {raffle.status.replace("_", " ")}
+            </span>
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground mono-num">
+            {raffle.tickets_sold}/{raffle.total_tickets} tickets · {timeLeft(raffle.deadline)}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-1">
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => draw({ data: { raffle_id: raffle.id } }), "Draw complete")}>Draw</Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => handover({ data: { raffle_id: raffle.id } }), "Payout released")}>Handover</Button>
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => refund({ data: { raffle_id: raffle.id } }), "Refunded")}>Refund</Button>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {/* Draw button — only when live or drawing */}
+        {(isLive || isDrawing) && (
+          <Button
+            size="sm" variant="outline" disabled={busy}
+            onClick={() => run(() => draw({ data: { raffle_id: raffle.id } }), "Draw complete — winner selected!")}
+          >
+            Trigger draw
+          </Button>
+        )}
+
+        {/* Handover button — only after draw completed */}
+        {isCompleted && (
+          <Button
+            size="sm" disabled={busy}
+            onClick={() => run(() => handover({ data: { raffle_id: raffle.id } }), "Handover confirmed — payout released")}
+          >
+            Confirm handover &amp; release payout
+          </Button>
+        )}
+
+        {/* Refund — available on live, drawing, or completed */}
+        <Button
+          size="sm" variant="outline" disabled={busy}
+          className="text-destructive hover:bg-destructive/10"
+          onClick={() => run(() => refund({ data: { raffle_id: raffle.id } }), "Raffle refunded — buyers notified")}
+        >
+          Issue refund
+        </Button>
       </div>
     </div>
   );

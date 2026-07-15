@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { raffles } = Route.useLoaderData() as { raffles: any[] };
-  const featured = raffles.slice(0, 6);
+  const featured = raffles.filter((r) => r.status === "live").slice(0, 6);
 
   return (
     <div>
